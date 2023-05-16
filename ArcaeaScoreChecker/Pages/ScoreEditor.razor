@@ -1,0 +1,277 @@
+﻿@page "/scoreeditor"
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@using Models;
+
+
+<table class="mb-3">
+    <tbody>
+        <tr>
+            <td rowspan="2">
+                <img src="@SongImage" style="width:5em;height:5em" />
+            </td>
+            <td><h3>@SongDisplay</h3></td>
+        </tr>
+        <tr>
+            <td><small>@SongArtist</small></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+<p align="center"><button class="btn btn-danger" @onclick="CleanInput">清空输入(X)</button></p>
+<div class="input-group mb-3">
+    <label class="input-group-text" for="inputGroupSelect01">难度</label>
+    <select @bind="SelectedValue" class="form-select" id="select_diff">
+        @if (song != null && song.ptt.pst > 0)
+        {
+            <option value="0">Past(@(song.ptt.pst))</option>
+        }
+        @if (song != null && song.ptt.prs > 0)
+        {
+            <option value="1">Present(@(song.ptt.prs))</option>
+        }
+        @if (song != null && song.ptt.ftr > 0)
+        {
+            <option value="2">Future(@(song.ptt.ftr))</option>
+        }
+        @if (song != null && song.ptt.byd > 0)
+        {
+            <option value="3">Beyond(@(song.ptt.byd))</option>
+        }
+    </select>
+</div>
+<div class="input-group mb-3">
+    <label class="input-group-text" for="select_mod">模式</label>
+    <select @bind="Score_Modify" class="form-select" id="select_mod">
+        <option value="0">普通</option>
+        <option value="1">简单</option>
+        <option value="2">困难</option>
+    </select>
+
+</div>
+<div class="input-group mb-3">
+    <label class="input-group-text" for="select_mod">完成</label>
+    <select @bind="Score_ClearType" class="form-select" id="select_mod">
+        <option value="0">Track Lost</option>
+        <option value="1">Normal Clear</option>
+        <option value="2">Full Recall</option>
+        <option value="3">Pure Memory</option>
+        <option value="4">Easy Clear</option>
+        <option value="5">Hard Clear</option>
+        
+    </select>
+</div>
+<div class="input-group mb-3">
+    <label class="input-group-text" for="input_score">分数</label>
+    <input id="input_score" type="text" class="form-control" @bind="Score_Score" disabled="@noAllowEdit" />
+</div>
+<div class="input-group mb-3">
+    <label class="input-group-text" for="input_score">Ptt</label>
+    <input id="input_score" type="text" class="form-control" value="@Score_ResultPtt" disabled/>
+</div>
+<table class="mb-3" style="text-align:center">
+    <thead>
+        <tr>
+            <th style="width:25%">MaxPure</th>
+            <th style="width:25%">Pure</th>
+            <th style="width:25%">Far</th>
+            <th style="width:25%">Lost</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><input @bind="Score_MaxPure" class="form-control" disabled="@noAllowEdit" /></td>
+            <td><input @bind="Score_Pure" class="form-control" disabled="@noAllowEdit" /></td>
+            <td><input @bind="Score_Far" class="form-control" disabled="@noAllowEdit" /></td>
+            <td><input @bind="Score_Lost" class="form-control" disabled="@noAllowEdit"/></td>
+        </tr>
+    </tbody>
+</table>
+<p align="center"><button class="btn btn-success" @onclick="SaveResult" disabled="@noAllowEdit">修改 Best</button>&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-warning" @onclick="PushRecent" disabled="@noAllowEdit">录入 Recent</button></p>
+
+@code {
+    //外部赋值的地方
+    public static string SongID = "";
+    public static string rollback = "";
+
+    public bool allowEdit = true;
+    public bool noAllowEdit
+    {
+        get
+        {
+            return !allowEdit;
+        }
+        set
+        {
+            allowEdit = !value;
+        }
+    }
+    public int SelectedValue
+    {
+        get
+        {
+            return selectedValue;
+        }
+        set
+        {
+            selectedValue = value;
+            score = null;
+            StateHasChanged();
+        }
+    }
+    public int selectedValue = 0;
+    public SongDiff selectedDiff
+    {
+        get
+        {
+            return (SongDiff)selectedValue;
+        }
+    }
+    public string SongImage
+    {
+        get
+        {
+            if (song != null)
+            {
+                return $"data:image/jpg;base64,{song.SepicalTitleImage_base64(selectedDiff)}";
+            }
+            else return $"data:image/jpg;base64,{SongModel.DefaultTitleImageBase64}";
+        }
+    }
+    public SongModel song
+    {
+        get
+        {
+            try
+            {
+                return GlobalData.songs.First((x) => { return x.ID == SongID; });
+            }
+            catch { return null; }
+        }
+    }
+    public ScoreModel score = null;
+    public ScoreModel Score
+    {
+        get
+        {
+            try {
+                if (score == null){
+                    ScoreModel m = ScoreData.Best.GetRecord(SongID, selectedDiff);
+                    score = m == null ? throw new Exception() : m;
+                }
+            }
+            catch {
+                score = new ScoreModel(SongID) { Diff = selectedDiff };
+            }
+            return score;
+        }
+    }
+    public int Score_Score
+    {
+        get { return Score.Score; }
+        set { Score.Score = value; }
+    }
+    public int Score_MaxPure
+    {
+        get { return Score.MaxPure; }
+        set { Score.MaxPure = value; }
+    }
+    public int Score_Pure
+    {
+        get { return Score.Pure; }
+        set { Score.Pure = value; }
+    }
+    public int Score_Far
+    {
+        get { return Score.Far; }
+        set { Score.Far = value; }
+    }
+    public int Score_Lost
+    {
+        get { return Score.Lost; }
+        set { Score.Lost = value; }
+    }
+    public float Score_ResultPtt
+    {
+        get{ return Score.ResultPtt; }
+    }
+    public int Score_Modify
+    {
+        get { return (int)Score.Modifier; }
+        set {
+            Score.Modifier = (Modifier)value; 
+        }
+    }
+    public int Score_ClearType
+    {
+        get { return (int)Score.ClearType; }
+        set { Score.ClearType = (ClearType)value; }
+    }
+    public string SongDisplay
+    {
+        get
+        {
+            if (song != null)
+                return song.SepicalDisplay(selectedDiff);
+            else return "[未找到歌曲]";
+        }
+    }
+    public string SongArtist
+    {
+        get
+        {
+            if (song != null)
+                return song.SepicalArtist(selectedDiff);
+            else return "[未找到歌曲]";
+        }
+    }
+    public void SaveResult()
+    {
+        var t = MainPage.mpEntry.DisplayAlert("修改确认?", "确定要保存所编辑的数据吗?", "确定", "等等!");
+        t.GetAwaiter().OnCompleted(() =>
+        {
+            if (t.Result)
+            {
+                ScoreData.Best.UpdateOrCreateRecord(SongID, selectedDiff, (Modifier)Score_Modify, (ClearType)Score_ClearType, Score_Score, Score_MaxPure, Score_Pure, Score_Far, Score_Lost);
+                Toast.Make("记录已保存").Show();
+            }
+        });
+    }
+    public void PushRecent()
+    {
+        var t = MainPage.mpEntry.DisplayAlert("Recent 录入确认", "确定要录入到 Recent 队列吗?", "确定", "等等!");
+        t.GetAwaiter().OnCompleted(() =>
+        {
+            if (t.Result)
+            {
+                int result = ScoreData.Recent.InsertAndUpdateRecent(SongID, selectedDiff, (Modifier)Score_Modify, (ClearType)Score_ClearType, Score_Score, Score_MaxPure, Score_Pure, Score_Far, Score_Lost, DateTime.Now);
+                if (result > 0)
+                {
+                    Toast.Make($"Recent 已更新({result})").Show();
+                }
+                else if (result == -1)
+                {
+                    Toast.Make("Recent 未更新(EX评分保护)").Show();
+                }
+                else if (result == -2)
+                {
+                    Toast.Make("Recent 未更新(Hard Lost)").Show();
+                }
+                else
+                {
+                    Toast.Make($"Recent 未更新({result})").Show();
+                }
+            }
+        });
+    }
+    public void CleanInput()
+    {
+        Score_Modify = (int)Modifier.Normal;
+        Score_ClearType = (int)ClearType.NormalClear;
+        Score_Score = 0;
+        Score_MaxPure = 0;
+        Score_Pure = 0;
+        Score_Far = 0;
+        Score_Lost = 0;
+    }
+}

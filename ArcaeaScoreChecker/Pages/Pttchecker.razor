@@ -1,0 +1,128 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@using Models
+
+
+<form class="input-group" onsubmit="return false;">
+    <input @bind="searchText" class="form-control" placeholder="曲目标题" @oninput="GetSearchResult" />
+    <input type="submit" class="btn btn-outline-secondary" @onclick="GetSearchResult" value="检索" />
+</form>
+
+<div class="mt-3">
+    <p class="mb-1" align="center"><small>点击右侧按钮修改成绩</small></p>
+    <p class="mb-0" align="center"><small>点击定数文本修改定数</small></p>
+</div>
+
+<table id="mainTable" class="table">
+    <thead>
+        <tr>
+            <th>标题</th>
+            <th>PST</th>
+            <th>PRS</th>
+            <th>FTR</th>
+            <th>BYD</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var target in searched)
+        {
+            <tr>
+                <td>@($"{target.Display} [{target.Artist}]")</td>
+                <td style="background-color:#6cf;text-align:center" @onclick="()=>{EditSongPtt(target.ID,SongDiff.Pst);}">@(target.ptt.pst > 0 ? target.ptt.pst : "-")</td>
+                <td style="background-color:#3f3;text-align:center" @onclick="()=>{EditSongPtt(target.ID,SongDiff.Prs);}">@(target.ptt.prs > 0 ? target.ptt.prs : "-")</td>
+                <td style="background-color:#929;color:white;text-align:center" @onclick="()=>{EditSongPtt(target.ID,SongDiff.Ftr);}">@(target.ptt.ftr > 0 ? target.ptt.ftr : "-")</td>
+                <td style="background-color:#900;color:white;text-align:center" @onclick="()=>{EditSongPtt(target.ID,SongDiff.Byd);}">@(target.ptt.byd > 0 ? target.ptt.byd : "-")</td>
+                <td><button class="btn btn-sm btn-warning" @onclick="()=>{ OpenRecordEditor(target.ID);}">*</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code{
+    private string searchText { get; set; }
+    public SongModel[] searched = GlobalData.songs;
+    public void GetSearchResult()
+    {
+        string target = searchText == null ? "": searchText;
+        searched = GlobalData.songs.Where((x) =>{
+            return x.Display.ToLower().Contains(target.ToLower());
+        }).ToArray();
+        StateHasChanged();
+    }
+
+    string songid = "";
+    string songDisplay
+    {
+        get
+        {
+            SongModel[] searched = GlobalData.songs.Where((x) =>
+            {
+                return x.ID == songid;
+            }).ToArray();
+            if (searched.Length > 0)
+            {
+                return searched[0].Display;
+            }
+            else return "";
+        }
+    }
+
+    public void OpenRecordEditor(string songid)
+    {
+        ScoreEditor.SongID = songid;
+        NavigationManager.NavigateTo("scoreeditor");
+    }
+    public void EditSongPtt(string songid,SongDiff diff)
+    {
+        SongModel search;
+        try
+        {
+            search = GlobalData.songs.Where((x) =>
+            {
+                return x.ID == songid;
+            }).ToArray().First();
+        }
+        catch { Toast.Make($"无法找到歌曲ID({songid})").Show();return; }
+
+        var t = MainPage.mpEntry.DisplayPromptAsync($"{search.SepicalDisplay(diff)}", $"修改 {diff} 定数(原始定数:{search.ptt.GetPtt(diff)})", "确认", "取消", "新定数");
+
+        t.GetAwaiter().OnCompleted(() =>
+        {
+            float val;
+            if (t.Result != null && float.TryParse(t.Result, out val))
+            {
+                search.ptt.UpdatePtt(diff, val);
+                if (GlobalData.UpdatePtts(GlobalData.songs))
+                {
+                    InvokeAsync(() =>{
+                        Toast.Make("定数表已更新").Show();
+                        StateHasChanged();
+                    });
+                }
+
+                
+            }
+            else if(t.Result != null)
+            {
+                InvokeAsync(() =>
+                {
+                    MainPage.mpEntry.DisplayAlert("输入错误", "请输入有效的数值", "OK");
+                });
+            }
+        });
+
+    }
+    protected override void OnInitialized()
+    {
+
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            JS.InvokeVoidAsync("setTableSort", "#mainTable");
+        }
+    }
+}

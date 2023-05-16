@@ -1,0 +1,162 @@
+﻿@page "/settings"
+@using Microsoft.AspNetCore.Components.Web
+@using System.Net.Http
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+
+<h3 align="center">数据库</h3>
+<p align="center"><button class="btn btn-danger" @onclick="CleanBest">清除 Best 数据</button></p>
+<p align="center"><button class="btn btn-danger" @onclick="CleanRecent">清除 Recent 数据</button></p>
+<p class="mb-0" align="center"><button class="btn btn-success" @onclick="ReadExternalSt3DB">导入 st3 数据(游戏分数存档)</button></p>
+<p align="center"><small>(如果你可以从别处提取 st3 文件的话)</small></p>
+<hr/>
+<h3 align="center">曲目数据</h3>
+<p align="center"><button class="btn btn-warning" @onclick="ExtractGameData">从安装包导入</button></p>
+<hr />
+<!---->
+<div hidden="true">
+<!--这部分看情况开发-->
+<hr/>
+</div>
+<!---->
+
+
+
+<div hidden="true">
+    <h3 align="center">曲目定数</h3>
+    <p align="center">
+        <button class="btn btn-success mb-3" @onclick="UpdatePtt_Arcwiki" disabled="@noAllowClick_pttfile">从 Arcaea Wiki 获取</button>
+    </p>
+</div>
+
+<div hidden="true">
+    <button @onclick="DEBUG">DEBUG</button>
+    <div>@debugoutput</div>
+</div>
+
+@code {
+    string debugoutput { get; set; }
+
+    bool _noAllowClick_pttfile = false;
+    bool noAllowClick_pttfile
+    {
+        get
+        {
+            return _noAllowClick_pttfile;
+        }
+        set
+        {
+            _noAllowClick_pttfile = value;
+        }
+    }
+
+    public void CleanBest()
+    {
+        var t = MainPage.mpEntry.DisplayAlert("操作确认","该操作将会清除所有 Best 记录,并且该操作不可逆!","清除","等下!");
+        t.GetAwaiter().OnCompleted(()=>
+        {
+            int dl = ScoreData.Best.DeleteAllRecord();
+            ScoreData.Best.VacUUM();
+            Toast.Make($"已删除 {dl} 条记录").Show();
+        });
+    }
+    public void CleanRecent()
+    {
+        var t = MainPage.mpEntry.DisplayAlert("操作确认", "该操作将会清除所有 Recent 记录,并且该操作不可逆!", "清除", "等下!");
+        t.GetAwaiter().OnCompleted(() =>
+        {
+            int dl = ScoreData.Recent.DeleteAllRecord();
+            ScoreData.Best.VacUUM();
+            Toast.Make($"已删除 {dl} 条记录").Show();
+        });
+    }
+    public void UpdatePtt_Arcwiki()
+    {
+
+    }
+
+    public async void DEBUG()
+    {
+        
+    }
+    public void ReadExternalSt3DB()
+    {
+        try
+        {
+            var t = FilePicker.PickAsync();
+            t.GetAwaiter().OnCompleted(() =>
+            {
+                if (t.Result != null)
+                {
+                    InvokeAsync(() =>
+                    {
+                        Toast.Make("正在导入数据").Show();
+                    });
+                    Task.Run(() =>
+                    {
+                        Stream s = t.Result.OpenReadAsync().Result;
+                        byte[] d = new byte[s.Length];
+                        s.Position = 0;
+                        s.Read(d);
+                        string cachedPath = FileSystem.CacheDirectory + "/st3";
+                        File.WriteAllBytes(cachedPath, d);
+                        try
+                        {
+                            ScoreData.Best.ConvertGameSt3Database(cachedPath);
+                            InvokeAsync(() =>
+                            {
+                                Toast.Make("数据已导入").Show();
+                            });
+                        }
+                        catch
+                        {
+                            InvokeAsync(() =>
+                            {
+                                Toast.Make("导入失败,这是正确的文件吗?").Show();
+                            });
+                        }
+                        File.Delete(cachedPath);
+                    });
+                }
+            });
+        }
+        catch { /*用户取消，不用处理*/}
+    }
+    public void ExtractGameData()
+    {
+        try
+        {
+            var t = FilePicker.PickAsync();
+            t.GetAwaiter().OnCompleted(() =>
+            {
+                if (t.Result != null)
+                {
+                    InvokeAsync(()=> { Toast.Make("正在导入,请稍后.").Show(); });
+                    Task.Run(() =>
+                    {
+                        Stream s = t.Result.OpenReadAsync().Result;
+                        int result = FileProcessor.ExtractAPK(s);
+                        if (result > 0)
+                        {
+                            GlobalData.initSongs();
+                            InvokeAsync(() => { MainPage.mpEntry.DisplayAlert("读取完毕", "歌曲数据已更新为你所选的安装包版本.", "确认"); });
+                        }
+                        else if (result == 0)
+                        {
+                            InvokeAsync(() => { MainPage.mpEntry.DisplayAlert("读取错误", "未在安装包内找到任何曲目数据,这是 Arcaea 的安装包吗?", "确认"); });
+                        }
+                        else if (result == -1)
+                        {
+                            InvokeAsync(() => { MainPage.mpEntry.DisplayAlert("无法读取数据", "这貌似是一个无效的文件.", "确认"); });
+                        }
+                        else
+                        {
+                            InvokeAsync(() => { MainPage.mpEntry.DisplayAlert("无法读取数据", "读取发生错误,请确保该文件为 Arcaea 的安装包.(" + result + ")", "确认"); });
+                        }
+                    });
+                }
+            });
+        }
+        catch { /*用户取消*/}
+    }
+}

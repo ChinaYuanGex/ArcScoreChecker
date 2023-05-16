@@ -1,0 +1,61 @@
+.battleProgress{
+	position:relative;
+	margin:8px 0;
+	height:2em;
+	overflow:hidden;
+	clip-path: polygon(0% 50%,1em 0,calc(100% - 1em) 0,100% 50%,calc(100% - 1em) 100%,1em 100%);
+}
+.battleProgress.midauthor{
+	position:absolute;
+	z-index: 2;
+	width:1px;
+	height:100%;
+	left:0;
+	right:0;
+	margin:auto;
+	border:none;
+	background-color:black;
+	clip-path:none;
+}
+.battleProgress progress{
+	width:100%;
+	appearance:none;
+	-webkit-appearance:none;
+	position:absolute;
+	height:100%;
+}
+.battleProgress progress:first-child::-webkit-progress-bar{
+	background-color:transparent;
+}
+.battleProgress progress:first-child::-webkit-progress-value{
+	background-color:#aa00aa;
+	position:relative;
+}
+.battleProgress progress::after{
+	content: attr(label);
+	position: absolute;
+	font-size:1em;
+	top:0;
+	bottom:0;
+	margin:auto;
+	height:fit-content;
+	padding:0 1em;
+	margin:auto;
+	color:white;
+}
+.battleProgress progress:first-child::after{
+	left:0;
+}
+.battleProgress progress:last-child::after{
+	top:0;
+	right:0;
+}
+.battleProgress progress:last-child::-webkit-progress-bar{
+	background-color:transparent;
+}
+.battleProgress progress:last-child::-webkit-progress-value{
+	position:absolute;
+	right:0;
+	background-color:#f00;
+	z-index: -1;
+}

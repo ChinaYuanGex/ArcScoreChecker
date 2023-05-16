@@ -1,0 +1,47 @@
+.idcard{
+	position:relative;
+	height:5em;
+	clip-path: polygon(0 50%,2.5em 0,calc(100% - 2.5em) 0,100% 50%,calc(100% - 2.5em) 100%,2.5em 100%);
+	background: linear-gradient(#777 0%,#eee 30%,#eee 70%, #777 100%);
+}
+.idcard .headimg{
+	height:calc(100% - 4px);
+	padding-top:2px;
+	position:absolute;
+	left:4px;
+}
+.idcard .idcard_content{
+	width: calc(100% - 10em);
+	height:fit-content;
+	position:absolute;
+	left: 0;
+	right: 0;
+	top:0;
+	bottom:0;
+	margin:auto;
+}
+.idcard div.ranking{
+	height:100%;
+	position:absolute;
+	right:0;
+	top:0;
+	font-family: "Exo-Medium";
+}
+.idcard div.ranking img{
+	left:8px;
+	height:100%;
+}
+.idcard .ptttext{
+	position:absolute;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	margin:auto;
+	width:fit-content;
+	height:fit-content;
+	font-weight:bold;
+	color:#fff;
+	text-shadow:0 0 2px #000;
+	font-size:1.2em;
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>ArcaeaScoreChecker</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="css/songCard.css" rel="stylesheet"/>
+    <link href="css/idcard.css" rel="stylesheet"/>
+    <link href="css/battleProg.css" rel="stylesheet"/>
+    <link href="ArcaeaScoreChecker.styles.css" rel="stylesheet" />
+    <style>
+        @font-face {
+            font-family: "Exo-Light";
+            src: url("Fonts/Exo-Light.ttf");
+        }
+
+        @font-face {
+            font-family: "Exo-Medium";
+            src: url("Fonts/Exo-Medium.ttf");
+        }
+
+        @font-face {
+            font-family: "Kazesawa-Regular";
+            src: url(Fonts/Kazesawa-Regular.ttf);
+        }
+
+        :root {
+            font-family: "Exo-Medium";
+        }
+    </style>
+    <script src="jquery/jquery.min.js"></script>
+    <script src="jquery/jquery.tablesorter.min.js"></script>
+    <script src="js/html2canvas.min.js"></script>
+    <script>
+        window.globalObjUrl = {};
+        window.setImage = async (imageElementId, imageStream) => {
+            const arrayBuffer = await imageStream.arrayBuffer();
+            const blob = new Blob([arrayBuffer]);
+            let url = "";
+            if (typeof (globalObjUrl[imageElementId]) == 'string') {
+                url = globalObjUrl[imageElementId];
+            }
+            else {
+                url = URL.createObjectURL(blob);
+                globalObjUrl[imageElementId] = url;
+            }
+            const image = document.getElementById(imageElementId);
+            /*image.onload = () => {
+                URL.revokeObjectURL(url);
+            }*/
+            image.src = url;
+        }
+        window.setTableSort = async (selector) => {
+            $(selector).tablesorter(); 
+        }
+        window.getRenderImageBase64 = async (id) => {
+            let canvasElem = await html2canvas(document.getElementById(id));
+            return canvasElem.toDataURL('image/jpeg', 0.8).split(',')[1];
+        }
+    </script>
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">加载中...</div>
+
+    <div id="blazor-error-ui">
+        程序运行发生错误
+        <a href="" class="reload">重载</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+
+</body>
+
+</html>

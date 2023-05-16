@@ -1,0 +1,338 @@
+﻿@page "/pagerecent"
+@inject IJSRuntime JSRuntime
+@using Models
+
+<div id="recent_listofall">
+    <div class="idcard mb-3">
+        <img src="images/char/unknown_icon.png" class="headimg" />
+        <div class="idcard_content">
+            <p align="center" style="font-size:1.6em;margin:0;font-weight:bold">R10[@(Tools.FloatParse.GetString(Recent10CurrentValue,5))]</p>
+        </div>
+        <div class="ranking">
+            <img src="images/ranking/rating_@(PttRank).png" />
+            <div class="ptttext">@(Tools.FloatParse.GetString(Recent10Value, 2))</div>
+        </div>
+    </div>
+@foreach (var a in Recent10)
+{
+    @if (GlobalData.songs.Count((x) => { return x.ID == a.SongID; }) < 1)
+    {
+        <div>[@a.SongID] 缺失数据...</div>
+        continue;
+    }
+    <div class="songCard">
+        <div>
+            <div class="scores_lbl_b30index" style="@(
+                Array.IndexOf(Recent10, a) == 0 ? "background-color:#ffd321" :
+                Array.IndexOf(Recent10, a) == 1 ? "background-color:#d8d8d8" :
+                Array.IndexOf(Recent10, a) == 2 ? "background-color:#b87333" :
+                Array.IndexOf(Recent10, a) > 9 ? "background-color:#444;color:white" : ""
+                )">
+                #@(
+                   Array.IndexOf(Recent10, a) + 1
+                   )
+            </div>
+            <img id="@($"r10_{a.song.ID}_{a.Diff}_{a.Time}")" />
+        </div>
+        <div>
+            <div class="scores_img_grade">
+                @switch (a.Rating)
+                {
+                    case Models.Rating.EXP:
+                        <img src="images/grade/explus.png" />
+                        break;
+                    case Models.Rating.EX:
+                        <img src="images/grade/ex.png" />
+                        break;
+                    case Models.Rating.AA:
+                        <img src="images/grade/aa.png" />
+                        break;
+                    case Models.Rating.A:
+                        <img src="images/grade/a.png" />
+                        break;
+                    case Models.Rating.B:
+                        <img src="images/grade/b.png" />
+                        break;
+                    case Models.Rating.C:
+                        <img src="images/grade/c.png" />
+                        break;
+                    default:
+                        <img src="images/grade/d.png" />
+                        break;
+                }
+            </div>
+            <div class="scores_img_clear">
+                @switch (a.ClearType)
+                {
+                    case Models.ClearType.PureMemory:
+                        <img src="images/clear/pure.png" />
+                        break;
+                    case Models.ClearType.FullRecall:
+                        <img src="images/clear/full.png" />
+                        break;
+                    case Models.ClearType.NormalClear:
+                        <img src="images/clear/normal.png" />
+                        break;
+                    case Models.ClearType.HardClear:
+                        <img src="images/clear/hard.png" />
+                        break;
+                    case Models.ClearType.EasyClear:
+                        <img src="images/clear/easy.png" />
+                        break;
+                    default:
+                        <img src="images/clear/fail.png" />
+                        break;
+                }
+            </div>
+            @switch (a.Diff)
+            {
+                case Models.SongDiff.Pst:
+                    <div class="scores_diff diff_0"><span>PST @(((float)a.ptts.pst).ToString("#0.0"))</span></div>
+                    break;
+                case Models.SongDiff.Prs:
+                        <div class="scores_diff diff_1"><span>PRS @(((float)a.ptts.prs).ToString("#0.0"))</span></div>
+                    break;
+                case Models.SongDiff.Ftr:
+                        <div class="scores_diff diff_2"><span>FTR @(((float)a.ptts.ftr).ToString("#0.0"))</span></div>
+                    break;
+                case Models.SongDiff.Byd:
+                        <div class="scores_diff diff_3"><span>BYD @(((float)a.ptts.byd).ToString("#0.0"))</span></div>
+                    break;
+            }
+            <p class="scores_lbl_title mb-0">@a.song.SepicalDisplay(@a.Diff)</p>
+            <p class="scores_lbl_arter mb-0">(@a.song.SepicalArtist(@a.Diff))</p>
+            <p class="scores_lbl_combo mb-0">@(a.Time.ToString("MM月dd日 HH时mm分ss秒"))</p>
+            <p class="scores_lbl_score mb-0">@a.Score (@a.ResultPtt)</p>
+            <p class="scores_lbl_combo mb-0">Pure:@(a.Pure) (@a.MaxPure)</p>
+            <p class="scores_lbl_combo mb-0"> Far:@a.Far Lost:@a.Lost</p>
+        </div>
+    </div>
+    @setImage($"r10_{a.song.ID}_{a.Diff}_{a.Time}",a.song.SepicalTitleImagePath(a.Diff))
+}
+<div class="mb-3">&nbsp;</div>
+</div>
+<p class="mt-3 mb-3" align="center"><button class="btn btn-success" @onclick="SavePhoto">保存为图片</button></p>
+<hr/>
+<h3 align="center">Recent&nbsp;30&nbsp;队列</h3>
+<hr/>
+@foreach (var a in Recent30)
+{
+    @if (GlobalData.songs.Count((x) => { return x.ID == a.SongID; }) < 1)
+    {
+        <div>[@a.SongID] 缺失数据...</div>
+        continue;
+    }
+    <div class="songCard">
+        <div>
+            <div class="scores_lbl_b30index" style="color:white;background-color:#111">
+                #@(
+                   Array.IndexOf(Recent30, a) + 1
+                   )
+            </div>
+            <img id="@($"r30_{a.song.ID}_{a.Diff}_{a.Time}")" />
+        </div>
+        <div>
+            <div class="scores_img_grade">
+                @switch (a.Rating)
+                {
+                    case Models.Rating.EXP:
+                        <img src="images/grade/explus.png" />
+                        break;
+                    case Models.Rating.EX:
+                        <img src="images/grade/ex.png" />
+                        break;
+                    case Models.Rating.AA:
+                        <img src="images/grade/aa.png" />
+                        break;
+                    case Models.Rating.A:
+                        <img src="images/grade/a.png" />
+                        break;
+                    case Models.Rating.B:
+                        <img src="images/grade/b.png" />
+                        break;
+                    case Models.Rating.C:
+                        <img src="images/grade/c.png" />
+                        break;
+                    default:
+                        <img src="images/grade/d.png" />
+                        break;
+                }
+            </div>
+            <div class="scores_img_clear">
+                @switch (a.ClearType)
+                {
+                    case Models.ClearType.PureMemory:
+                        <img src="images/clear/pure.png" />
+                        break;
+                    case Models.ClearType.FullRecall:
+                        <img src="images/clear/full.png" />
+                        break;
+                    case Models.ClearType.NormalClear:
+                        <img src="images/clear/normal.png" />
+                        break;
+                    case Models.ClearType.HardClear:
+                        <img src="images/clear/hard.png" />
+                        break;
+                    case Models.ClearType.EasyClear:
+                        <img src="images/clear/easy.png" />
+                        break;
+                    default:
+                        <img src="images/clear/fail.png" />
+                        break;
+                }
+            </div>
+            @switch (a.Diff)
+            {
+                case Models.SongDiff.Pst:
+                    <div class="scores_diff diff_0"><span>PST @(((float)a.ptts.pst).ToString("#0.0"))</span></div>
+                    break;
+                case Models.SongDiff.Prs:
+                    <div class="scores_diff diff_1"><span>PRS @(((float)a.ptts.prs).ToString("#0.0"))</span></div>
+                    break;
+                case Models.SongDiff.Ftr:
+                    <div class="scores_diff diff_2"><span>FTR @(((float)a.ptts.ftr).ToString("#0.0"))</span></div>
+                    break;
+                case Models.SongDiff.Byd:
+                    <div class="scores_diff diff_3"><span>BYD @(((float)a.ptts.byd).ToString("#0.0"))</span></div>
+                    break;
+            }
+            <p class="scores_lbl_title mb-0">@a.song.SepicalDisplay(@a.Diff)</p>
+            <p class="scores_lbl_arter mb-0">(@a.song.SepicalArtist(@a.Diff))</p>
+            <p class="scores_lbl_combo mb-0">@(a.Time.ToString("MM月dd日 HH时mm分ss秒"))</p>
+            <p class="scores_lbl_score mb-0">@a.Score (@a.ResultPtt)</p>
+            <p class="scores_lbl_combo mb-0">Pure:@(a.Pure) (@a.MaxPure)</p>
+            <p class="scores_lbl_combo mb-0"> Far:@a.Far Lost:@a.Lost</p>
+        </div>
+    </div>
+    @setImage($"r30_{a.song.ID}_{a.Diff}_{a.Time}",a.song.SepicalTitleImagePath(a.Diff))
+}
+<div class="mb-3"></div>
+
+@code {
+    private ScoreModel[] r10 = null;
+    public ScoreModel[] Recent10
+    {
+        get
+        {
+            if (r10 == null)
+            {
+                r10 = ScoreData.Recent.ReadRecent10();
+            }
+            return r10;
+        }
+    }
+    private ScoreModel[] r30 = null;
+    public ScoreModel[] Recent30
+    {
+        get
+        {
+            if (r30 == null)
+            {
+                r30 = ScoreData.Recent.ReadRecent30();
+            }
+            return r30;
+        }
+    }
+    public string setImage(string selector, string filePath)
+    {
+        SetImage(selector, filePath);
+        return "";
+    }
+    public async Task SetImage(string selector, string filePath)
+    {
+        MemoryStream fileStream = new MemoryStream(File.ReadAllBytes(filePath));
+        DotNetStreamReference imgStream = new DotNetStreamReference(fileStream);
+        await JSRuntime.InvokeVoidAsync("setImage", selector, imgStream);
+    }
+    public float Recent10Value
+    {
+        get
+        {
+            float val = 0.0f;
+            foreach (ScoreModel r1 in Recent10)
+            {
+                val += r1.ResultPtt;
+            }
+            return val / 10.0f;
+        }
+    }
+    public float Recent10CurrentValue
+    {
+        get
+        {
+            float val = 0.0f;
+            foreach (ScoreModel r1 in Recent10)
+            {
+                val += r1.ResultPtt;
+            }
+            return val / 40.0f;
+        }
+    }
+    public string PttRank{
+        get
+        {
+            if (Recent10Value >= 13.00) return "7";
+            else if (Recent10Value >= 12.50) return "6";
+            else if (Recent10Value >= 12.00) return "5";
+            else if (Recent10Value >= 11.00) return "4";
+            else if (Recent10Value >= 10.00) return "3";
+            else if (Recent10Value >= 7.00) return "2";
+            else if (Recent10Value >= 3.50) return "1";
+            else if (Recent10Value >= 0.00) return "0";
+            else return "off";
+        }
+    }
+    public void SavePhoto()
+    {
+        Toast.Make("正在生成,请勿离开.").Show();
+        ValueTask<string> t = JSRuntime.InvokeAsync<string>("getRenderImageBase64", "recent_listofall");
+        t.GetAwaiter().OnCompleted(() =>
+        {
+            byte[] picData = Convert.FromBase64String(t.Result);
+
+            Permissions.StorageWrite w = new Permissions.StorageWrite();
+            if (w.CheckStatusAsync().Result != PermissionStatus.Granted)
+            {
+                Task<PermissionStatus> t = w.RequestAsync();
+                t.GetAwaiter().OnCompleted(() =>
+            {
+                if (t.Result == PermissionStatus.Granted)
+                {
+                    savePhoto(picData);
+                }
+                else Toast.Make("需要存储权限").Show();
+            });
+            }
+            else
+            {
+                savePhoto(picData);
+            }
+        });
+
+
+    }
+    public void savePhoto(byte[] data)
+    {
+        string BasePath = "/storage/emulated/0/Pictures";
+        string filePath = BasePath + "/arcs_recent_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".jpg";
+        try
+        {
+            if (!Directory.Exists(BasePath))
+            {
+                Directory.CreateDirectory(BasePath);
+            }
+            FileProcessor.SaveFile(filePath, data);
+            InvokeAsync(() =>
+            {
+                MainPage.mpEntry.DisplayAlert("保存完毕", "位于:" + filePath, "OK");
+            });
+        }
+        catch
+        {
+            InvokeAsync(() =>
+            {
+                MainPage.mpEntry.DisplayAlert("写入失败", "请检查是否授权存储写入权限", "OK");
+            });
+        }
+    }
+}
